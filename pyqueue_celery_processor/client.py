@@ -9,7 +9,7 @@ import queue
 try:
     import sentry_sdk
 except ImportError:
-    pass
+    sentry_sdk = None
 from .consumer import Consumer
 
 

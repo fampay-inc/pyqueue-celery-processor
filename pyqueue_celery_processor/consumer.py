@@ -10,7 +10,7 @@ from threading import Thread
 try:
     import sentry_sdk
 except ImportError:
-    pass
+    sentry_sdk = None
 
 
 class Consumer(Thread):
