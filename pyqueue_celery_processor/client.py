@@ -19,21 +19,26 @@ class Client(object):
     log = logging.getLogger("python-celery-queue")
     threshold_size = 10_000
 
-    def __init__(self, max_queue_size=1_00_000, send=True):
+    def __init__(self, max_queue_size=1_00_000, send=True, debug=False):
         self.queue = queue.Queue(max_queue_size)
         self.send = send
         self.threshold_exceeded = False
+        if debug:
+            logging.basicConfig(format="%(threadName)s:%(message)s")
+            self.log.setLevel(logging.DEBUG)
+            self.log.debug("Python celery queue initialised")
         # Pauses polling the queue and processes left tasks
         if send:
             atexit.register(self.join)
 
-        self.consumer = Consumer(self.queue)
+        self.consumer = Consumer(self.queue, debug)
         if send:
             self.consumer.start()
 
     def enqueue(self, task_func, countdown=0, args=[], kwargs={}):
         """Publishes the task into the queue.
         Drops the task if queue size reaches max limit"""
+        self.log.debug("enqueued task: %s", task_func.__name__)
         msg = {
             "task_func": task_func,
             "countdown": countdown,
@@ -68,6 +73,7 @@ class Client(object):
         """Exits the consumer thread once queue is empty.
         Blocks main thread until secondary thread completes
         """
+        self.log.debug("Exiting python celery queue")
         self.consumer.pause()
         try:
             self.consumer.join()

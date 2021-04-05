@@ -18,21 +18,25 @@ class Consumer(Thread):
 
     log = logging.getLogger("python-celery-queue")
 
-    def __init__(self, queue):
+    def __init__(self, queue, debug=False):
         Thread.__init__(self)
         self.daemon = True
         self.running = True
         self.queue = queue
+        if debug:
+            logging.basicConfig(format="%(threadName)s:%(message)s")
+            self.log.setLevel(logging.DEBUG)
+            self.log.debug("Python celery queue consumer thread started")
 
     def run(self):
-        self.log.info("Consumer for celery tasks is running")
+        self.log.debug("Consumer for celery tasks is running")
         while self.running:
             self.process_queue()
-        self.log.info("Consumer for celery tasks stopped")
+        self.log.debug("Consumer for celery tasks stopped")
 
     def pause(self):
         # pause polling queue for newer tasks
-        self.log.info("Celery-Queue consumer paused")
+        self.log.debug("Celery-Queue consumer paused")
         self.running = False
 
     def process_queue(self):
@@ -56,14 +60,14 @@ class Consumer(Thread):
                 if sentry_sdk:
                     sentry_sdk.capture_exception(exc)
 
-    @staticmethod
-    def process_task(task_item, max_tries=10):
+    def process_task(self, task_item, max_tries=10):
         """Executes a given task item, retries for max_tries times when broker is down
         before dropping a task"""
         task_func = task_item["task_func"]
         countdown = task_item["countdown"]
         args = task_item["args"]
         kwargs = task_item["kwargs"]
+        self.log.debug("consumed task: %s", task_func.__name__)
         # retry processing a task for max_tries, else report to sentry
         for retry in range(max_tries):
             try:
