@@ -8,14 +8,14 @@ long_description = """Python queue to process celery tasks and
 
 setup(
     name='pyqueue_celery_processor',
-    version="0.0.3",
+    version="0.0.4",
     author="Fampay",
     author_email='tech@fampay.in',
     maintainer="Fampay",
     maintainer_email='tech@fampay.in',
     packages=['pyqueue_celery_processor'],
     license='MIT License',
-    url="https://gitlab.com/shubham.s2/pyqueue-celery-processor",
+    url="https://gitlab.com/fampay-oss/pyqueue-celery-processor",
     install_requires=install_requires,
     description='Python queue to process celery tasks.',
     long_description=long_description,
