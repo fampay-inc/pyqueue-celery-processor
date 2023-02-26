@@ -67,7 +67,7 @@ class Consumer(Thread):
         countdown = task_item["countdown"]
         args = task_item["args"]
         kwargs = task_item["kwargs"]
-        self.log.debug("consumed task: %s", task_func.__name__)
+        self.log.debug("consumed task: %s | %s", task_func.__name__, args)
         # retry processing a task for max_tries, else report to sentry
         for retry in range(max_tries):
             try:
@@ -76,12 +76,14 @@ class Consumer(Thread):
                 )
             except task_func.OperationalError:
                 if retry == max_tries - 1:
+                    self.log.debug("Task %s dropped, error in broker connection | %s", task_func.__name__, task_item)
                     if sentry_sdk:
                         sentry_sdk.capture_message(
                             "Task dropped, error in broker connection", task_item
                         )
                 time.sleep(2)
             except Exception:
+                self.log.debug("Error in invoking celery task %s | %s", task_func.__name__, task_item)
                 raise ValueError(
                     f"Error in invoking celery task {task_func.__name__}"
                 ) from None

@@ -38,7 +38,7 @@ class Client(object):
     def enqueue(self, task_func, countdown=0, args=[], kwargs={}):
         """Publishes the task into the queue.
         Drops the task if queue size reaches max limit"""
-        self.log.debug("enqueued task: %s", task_func.__name__)
+        self.log.debug("enqueued task: %s | %s", task_func.__name__, args)
         msg = {
             "task_func": task_func,
             "countdown": countdown,
@@ -52,6 +52,7 @@ class Client(object):
         size = self.queue.qsize()
         if size > self.threshold_size and not self.threshold_exceeded:
             self.threshold_exceeded = True
+            self.log.debug("Celery task %s queue size exceeded threshold. Size: %s | %s", task_func.__name__, size, args)
             if sentry_sdk:
                 sentry_sdk.capture_message(
                     f"Celery task queue size exceeded threshold. Size:{size}"
@@ -63,6 +64,7 @@ class Client(object):
             self.queue.put(msg, block=False)
             return True, msg
         except queue.Full:
+            self.log.debug("Task %s dropped, internal queue max limit reached | %s", task_func.__name__, args)
             if sentry_sdk:
                 sentry_sdk.capture_message(
                     "Task dropped, internal queue max limit reached", msg
