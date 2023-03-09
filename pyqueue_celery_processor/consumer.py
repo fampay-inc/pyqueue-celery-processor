@@ -67,14 +67,14 @@ class Consumer(Thread):
         countdown = task_item["countdown"]
         args = task_item["args"]
         kwargs = task_item["kwargs"]
-        self.log.debug("consumed task: %s | %s | %s", task_func.__name__, args, countdown)
+        self.log.debug("consuming task: %s | %s | %s", task_func.__name__, args, countdown)
         # retry processing a task for max_tries, else report to sentry
         for retry in range(max_tries):
             try:
                 async_result = task_func.apply_async(
                     args=args, kwargs=kwargs, countdown=countdown
                 )
-                self.log.debug("task registered: %s | %s | %s | %s", task_func.__name__, args,
+                self.log.debug("consumed task: %s | %s | %s | %s", task_func.__name__, args,
                                async_result.id, async_result.status)
                 return async_result
             except task_func.OperationalError:
@@ -86,7 +86,7 @@ class Consumer(Thread):
                         )
                 time.sleep(2)
             except Exception:
-                self.log.debug("Error in invoking celery task %s | %s", task_func.__name__, task_item)
+                self.log.exception("Error in invoking celery task %s | %s", task_func.__name__, task_item)
                 raise ValueError(
                     f"Error in invoking celery task {task_func.__name__}"
-                ) from None
+                )
