@@ -8,7 +8,7 @@ long_description = """Python queue to process celery tasks and
 
 setup(
     name='pyqueue_celery_processor',
-    version="0.0.6",
+    version="0.0.7",
     author="Fampay",
     author_email='tech@fampay.in',
     maintainer="Fampay",

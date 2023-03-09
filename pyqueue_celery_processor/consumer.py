@@ -67,13 +67,16 @@ class Consumer(Thread):
         countdown = task_item["countdown"]
         args = task_item["args"]
         kwargs = task_item["kwargs"]
-        self.log.debug("consumed task: %s | %s", task_func.__name__, args)
+        self.log.debug("consumed task: %s | %s | %s", task_func.__name__, args, countdown)
         # retry processing a task for max_tries, else report to sentry
         for retry in range(max_tries):
             try:
-                return task_func.apply_async(
+                async_result = task_func.apply_async(
                     args=args, kwargs=kwargs, countdown=countdown
                 )
+                self.log.debug("task registered: %s | %s | %s | %s", task_func.__name__, args,
+                               async_result.id, async_result.status)
+                return async_result
             except task_func.OperationalError:
                 if retry == max_tries - 1:
                     self.log.debug("Task %s dropped, error in broker connection | %s", task_func.__name__, task_item)
