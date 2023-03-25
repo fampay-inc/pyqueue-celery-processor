@@ -11,6 +11,7 @@ try:
 except ImportError:
     sentry_sdk = None
 from .consumer import Consumer
+from .metrics import TASKS_ENQUEUE_TOTAL, TASKS_ENQUEUE_FAILED_TOTAL
 
 
 class Client(object):
@@ -62,6 +63,7 @@ class Client(object):
         # add to queue
         try:
             self.queue.put(msg, block=False)
+            TASKS_ENQUEUE_TOTAL.labels(task_name=task_func.__name__).inc()  # pragma: no cover
             return True, msg
         except queue.Full:
             self.log.debug("Task %s dropped, internal queue max limit reached | %s", task_func.__name__, args)
@@ -69,6 +71,7 @@ class Client(object):
                 sentry_sdk.capture_message(
                     "Task dropped, internal queue max limit reached", msg
                 )
+            TASKS_ENQUEUE_FAILED_TOTAL.labels(task_name=task_func.__name__).inc()  # pragma: no cover
             return False, msg
 
     def join(self):
