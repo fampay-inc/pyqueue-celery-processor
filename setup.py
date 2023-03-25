@@ -1,6 +1,7 @@
 from setuptools import setup
 
 install_requires = [
+    'prometheus-client==0.11.0',
 ]
 
 long_description = """Python queue to process celery tasks and

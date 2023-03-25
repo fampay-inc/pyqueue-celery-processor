@@ -6,7 +6,7 @@ import logging
 import time
 from queue import Empty
 from threading import Thread
-
+from pyqueue_celery_processor.metrics import TASKS_PROCESS_SUCCESS, TASKS_PROCESS_FAILED
 try:
     import sentry_sdk
 except ImportError:
@@ -76,8 +76,10 @@ class Consumer(Thread):
                 )
                 self.log.debug("consumed task: %s | %s | %s | %s", task_func.__name__, args,
                                async_result.id, async_result.status)
+                TASKS_PROCESS_SUCCESS.labels(task_name=task_func.__name__).inc()  # pragma: no cover
                 return async_result
             except task_func.OperationalError:
+                TASKS_PROCESS_FAILED.labels(task_name=task_func.__name__).inc()  # pragma: no cover
                 if retry == max_tries - 1:
                     self.log.debug("Task %s dropped, error in broker connection | %s", task_func.__name__, task_item)
                     if sentry_sdk:
@@ -86,6 +88,7 @@ class Consumer(Thread):
                         )
                 time.sleep(2)
             except Exception:
+                TASKS_PROCESS_FAILED.labels(task_name=task_func.__name__).inc()  # pragma: no cover
                 self.log.exception("Error in invoking celery task %s | %s", task_func.__name__, task_item)
                 raise ValueError(
                     f"Error in invoking celery task {task_func.__name__}"
