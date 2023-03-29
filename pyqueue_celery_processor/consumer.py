@@ -87,9 +87,9 @@ class Consumer(Thread):
                             "Task dropped, error in broker connection", task_item
                         )
                 time.sleep(2)
-            except Exception:
+            except Exception as e:
                 TASKS_PROCESS_FAILED.labels(task_name=task_func.__name__).inc()  # pragma: no cover
                 self.log.exception("Error in invoking celery task %s | %s", task_func.__name__, task_item)
                 raise ValueError(
                     f"Error in invoking celery task {task_func.__name__}"
-                )
+                ) from e

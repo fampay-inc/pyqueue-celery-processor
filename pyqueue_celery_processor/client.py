@@ -36,9 +36,13 @@ class Client(object):
         if send:
             self.consumer.start()
 
-    def enqueue(self, task_func, countdown=0, args=[], kwargs={}):
+    def enqueue(self, task_func, countdown=0, args=None, kwargs=None):
         """Publishes the task into the queue.
         Drops the task if queue size reaches max limit"""
+        if args is None:
+            args = []
+        if kwargs is None:
+            kwargs = {}
         self.log.debug("enqueued task: %s | %s", task_func.__name__, args)
         msg = {
             "task_func": task_func,
@@ -83,5 +87,4 @@ class Client(object):
         try:
             self.consumer.join()
         except RuntimeError:
-            # consumer thread not running
-            pass
+            self.log.debug("consumer thread not running")
