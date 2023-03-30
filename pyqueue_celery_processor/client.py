@@ -14,20 +14,19 @@ from .consumer import Consumer
 from .metrics import TASKS_ENQUEUE_TOTAL, TASKS_ENQUEUE_FAILED_TOTAL
 
 
+LOGGER = logging.getLogger("python-celery-queue")
+
+
 class Client(object):
     """Create a new celery-queue client."""
 
-    log = logging.getLogger("python-celery-queue")
     threshold_size = 10_000
 
     def __init__(self, max_queue_size=1_00_000, send=True, debug=False):
         self.queue = queue.Queue(max_queue_size)
         self.send = send
         self.threshold_exceeded = False
-        if debug:
-            logging.basicConfig(format="%(threadName)s:%(message)s")
-            self.log.setLevel(logging.DEBUG)
-            self.log.debug("Python celery queue initialised")
+        LOGGER.info("Python celery queue initialised")
         # Pauses polling the queue and processes left tasks
         if send:
             atexit.register(self.join)
@@ -43,7 +42,7 @@ class Client(object):
             args = []
         if kwargs is None:
             kwargs = {}
-        self.log.debug("enqueued task: %s | %s", task_func.__name__, args)
+        LOGGER.info("enqueued task: %s | %s", task_func.__name__, args)
         msg = {
             "task_func": task_func,
             "countdown": countdown,
@@ -57,7 +56,7 @@ class Client(object):
         size = self.queue.qsize()
         if size > self.threshold_size and not self.threshold_exceeded:
             self.threshold_exceeded = True
-            self.log.debug("Celery task %s queue size exceeded threshold. Size: %s | %s", task_func.__name__, size, args)
+            LOGGER.info("Celery task %s queue size exceeded threshold. Size: %s | %s", task_func.__name__, size, args)
             if sentry_sdk:
                 sentry_sdk.capture_message(
                     f"Celery task queue size exceeded threshold. Size:{size}"
@@ -70,7 +69,7 @@ class Client(object):
             TASKS_ENQUEUE_TOTAL.labels(task_name=task_func.__name__).inc()  # pragma: no cover
             return True, msg
         except queue.Full:
-            self.log.debug("Task %s dropped, internal queue max limit reached | %s", task_func.__name__, args)
+            LOGGER.info("Task %s dropped, internal queue max limit reached | %s", task_func.__name__, args)
             if sentry_sdk:
                 sentry_sdk.capture_message(
                     "Task dropped, internal queue max limit reached", msg
@@ -82,9 +81,9 @@ class Client(object):
         """Exits the consumer thread once queue is empty.
         Blocks main thread until secondary thread completes
         """
-        self.log.debug("Exiting python celery queue")
+        LOGGER.info("Exiting python celery queue")
         self.consumer.pause()
         try:
             self.consumer.join()
         except RuntimeError:
-            self.log.debug("consumer thread not running")
+            LOGGER.info("consumer thread not running")
