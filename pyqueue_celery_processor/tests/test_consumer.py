@@ -1,6 +1,8 @@
 import unittest
 import queue
+
 from unittest.mock import Mock, patch
+
 from .tasks import sample_test_task
 from pyqueue_celery_processor.consumer import Consumer
 
@@ -25,6 +27,7 @@ class TestConsumer(unittest.TestCase):
         }
         consumer.process_task(msg)
         sample_test_task.apply_async.assert_called_once()
+
     def test_process_task_successful(self):
         task = {
             "task_func": Mock(),
@@ -50,7 +53,6 @@ class TestConsumer(unittest.TestCase):
             "kwargs": {},
         }
         self.assertRaises(ValueError, consumer.process_task, msg)
-
 
     @patch("pyqueue_celery_processor.consumer.sentry_sdk")
     def test_sentry_invoked(self, sentry_mock):
