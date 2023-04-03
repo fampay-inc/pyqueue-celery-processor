@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import patch
+
 from pyqueue_celery_processor.client import Client
+
 
 class TestClient(unittest.TestCase):
     def setUp(self) -> None:
