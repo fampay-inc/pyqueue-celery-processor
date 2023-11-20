@@ -11,7 +11,11 @@ try:
 except ImportError:
     sentry_sdk = None
 from .consumer import Consumer
-from .metrics import TASKS_ENQUEUE_TOTAL, TASKS_ENQUEUE_FAILED_TOTAL
+from .metrics import (
+    CONSUMER_STOPPED_GRACEFULLY,
+    TASKS_ENQUEUE_TOTAL,
+    TASKS_ENQUEUE_FAILED_TOTAL,
+)
 
 
 LOGGER = logging.getLogger("python-celery-queue")
@@ -85,5 +89,9 @@ class Client(object):
         self.consumer.pause()
         try:
             self.consumer.join()
+            CONSUMER_STOPPED_GRACEFULLY.inc()  # pragma: no cover
+            LOGGER.info("Consumer stopped gracefully")
         except RuntimeError:
             LOGGER.info("consumer thread not running")
+        except Exception as e:
+            LOGGER.info("Unexpected exception occured while trying to stop consumer gracefully. Exception: %s", str(e))

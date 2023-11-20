@@ -29,3 +29,8 @@ TASKS_PROCESS_FAILED = Counter(
     "Total number of tasks failed to go from the in-memory queue to broker",
     ["task_name"],
 )
+
+CONSUMER_STOPPED_GRACEFULLY = Counter(
+    "consumer_stopped_gracefully",
+    "Total count of when consumer was able to stop gracefully",
+)
